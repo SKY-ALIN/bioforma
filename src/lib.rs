@@ -3,6 +3,7 @@ use pyo3::types::PyDict;
 use pyo3::wrap_pymodule;
 
 mod alphabets;
+mod scores;
 
 pub fn get_version() -> String {
     let version = env!("CARGO_PKG_VERSION").to_string();
@@ -29,6 +30,11 @@ fn _bioforma(py: Python, m: &PyModule) -> PyResult<()> {
     let sys = PyModule::import(py, "sys")?;
     let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
     sys_modules.set_item("bioforma.alphabets", m.getattr("alphabets")?)?;
+
+    m.add_wrapped(wrap_pymodule!(scores::scores))?;
+    let sys = PyModule::import(py, "sys")?;
+    let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
+    sys_modules.set_item("bioforma.scores", m.getattr("scores")?)?;
 
     Ok(())
 }
