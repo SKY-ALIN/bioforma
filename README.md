@@ -21,7 +21,7 @@ Progress tree:
 - [ ] pattern_matching
   - [ ] myers
   - [ ] pssm
-- [ ] scores
+- [x] scores
 - [ ] seq_analysis
 - [ ] stats
   - [ ] bayesian
