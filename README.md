@@ -1,6 +1,6 @@
 # 🧬 bioforma
 
-Rust-bio wrap for Python. Use the speed of Rust with the Python's high level for bioinformatics challenges.
+Rust-bio wrap for Python. Use the speed of Rust with the Python's high-level for bioinformatics challenges.
 
 ## Installation
 
@@ -21,7 +21,7 @@ Progress tree:
 - [ ] pattern_matching
   - [ ] myers
   - [ ] pssm
-- [ ] scores
+- [x] scores
 - [ ] seq_analysis
 - [ ] stats
   - [ ] bayesian
