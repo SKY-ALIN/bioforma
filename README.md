@@ -8,7 +8,7 @@ Install using `pip install bioforma`.
 
 ## Status
 
-In the active development phase.
+⚠️ In the active development phase. ⚠️
 
 Progress tree:
 
