@@ -39,6 +39,8 @@ def test_rank_transform():
     assert rt.get(b'A') == 0
     assert rt.get(b't') == 7
     assert rt.transform(b'aAcCgGtT') == [4, 0, 5, 1, 6, 2, 7, 3]
+    assert rt.ranks =={'G': 2, 't': 7, 'c': 5, 'C': 1, 'a': 4, 'A': 0, 'T': 3, 'g': 6}
+    assert repr(rt) == '<RankTransform: A-0, C-1, G-2, T-3, a-4, c-5, g-6, t-7>'
 
     try:
         rt.transform(b'acxben')

@@ -49,17 +49,17 @@ struct Finder(_Finder);
 impl Finder {
     #[new]
     pub fn new(start: Vec<&[u8]>, stop: Vec<&[u8]>, min_len: usize) -> PyResult<Self> {
-        let start_codons = retype_vec(start);
-        let stop_codons = retype_vec(stop);
+        let start_codons_res = retype_vec(start);
+        let stop_codons_res = retype_vec(stop);
 
-        if start_codons.is_err() {
-            Err(start_codons.unwrap_err())
-        } else if stop_codons.is_err() {
-            Err(stop_codons.unwrap_err())
+        if let Err(err) = start_codons_res {
+            Err(err)
+        } else if let Err(err) = stop_codons_res {
+            Err(err)
         } else {
             let _finder: _Finder = _Finder::new(
-                start_codons.unwrap(),
-                stop_codons.unwrap(),
+                start_codons_res.unwrap(),
+                stop_codons_res.unwrap(),
                 min_len,
             );
             Ok(Finder(_finder))
@@ -67,7 +67,7 @@ impl Finder {
     }
 
     pub fn find_all(&self, sequence: &[u8]) -> Vec<Orf> {
-        self.0.find_all(sequence).map(|_orf| Orf(_orf)).collect()
+        self.0.find_all(sequence).map(Orf).collect()
     }
 }
 

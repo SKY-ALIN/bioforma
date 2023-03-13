@@ -1,6 +1,7 @@
+use std::collections::HashMap;
 use pyo3::prelude::*;
 use pyo3::wrap_pymodule;
-use pyo3::types::{PyBytes, PyDict};
+use pyo3::types::{IntoPyDict, PyBytes, PyDict};
 use pyo3::exceptions::PyValueError;
 use bio::alphabets::{
     Alphabet        as _Alphabet,
@@ -51,7 +52,7 @@ impl Alphabet {
 
     pub fn __repr__(&self) -> String {
         let v: Vec<u8> = self.0.symbols.clone().iter().map(|a| a as u8).collect();
-        format!("<Alphabet: {}>", String::from_utf8(v).expect("invalid"))
+        format!("<Alphabet: {}>", String::from_utf8(v).unwrap_or("invalid".into()))
     }
 
     pub fn __bytes__<'p>(&self, py: Python<'p>) -> &'p PyBytes {
@@ -103,6 +104,26 @@ impl RankTransform {
 
     pub fn get_width(&self) -> usize {
         self.0.get_width()
+    }
+
+    #[getter]
+    pub fn ranks<'p>(&self, py: Python<'p>) -> &'p PyDict {
+        let mut res = HashMap::new();
+        for (key, value) in self.0.ranks.iter() {
+            let chr = char::from(key as u8);
+            res.insert(chr.to_string(), *value);
+        }
+        res.into_py_dict(py)
+    }
+
+    pub fn __repr__(&self) -> String {
+        let a: Vec<String> = self.0.ranks
+            .iter()
+            .map(|(key, value)|
+                format!("{}-{}", char::from(key as u8), value)
+            )
+            .collect();
+        format!("<RankTransform: {}>", a.join(", "))
     }
 }
 
