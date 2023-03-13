@@ -89,7 +89,6 @@ name = "bioforma"
 version = "0.0.0"
 dependencies = [
  "bio",
- "bit-set",
  "pyo3",
 ]
 

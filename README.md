@@ -10,19 +10,19 @@ Install using `pip install bioforma`.
 
 ⚠️ In the active development phase. ⚠️
 
-Progress tree:
+Progress tree (3/18):
 
 - [ ] alignment
   - [ ] pairwise
-- [x] alphabets
+- [x] **alphabets**
 - [ ] data_structures
   - [ ] interval_tree
 - [ ] io
 - [ ] pattern_matching
   - [ ] myers
   - [ ] pssm
-- [x] scores
-- [ ] seq_analysis
+- [x] **scores**
+- [x] **seq_analysis**
 - [ ] stats
   - [ ] bayesian
   - [ ] hmm

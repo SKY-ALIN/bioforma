@@ -30,4 +30,3 @@ crate-type = ["cdylib"]
 [dependencies]
 pyo3 = "0.18.1"
 bio = "1.1.0"
-bit-set = "0.5"
