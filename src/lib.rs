@@ -2,6 +2,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::wrap_pymodule;
 
+mod alignment;
 mod alphabets;
 mod scores;
 mod seq_analysis;
@@ -27,6 +28,11 @@ fn _bioforma(py: Python, m: &PyModule) -> PyResult<()> {
     m.add("__authors__", get_authors())?;
     m.add("build_profile", env!("PROFILE"))?;
 
+    m.add_wrapped(wrap_pymodule!(alignment::alignment))?;
+    let sys = PyModule::import(py, "sys")?;
+    let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
+    sys_modules.set_item("bioforma.alignment", m.getattr("alignment")?)?;
+
     m.add_wrapped(wrap_pymodule!(alphabets::alphabets))?;
     let sys = PyModule::import(py, "sys")?;
     let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
@@ -36,7 +42,7 @@ fn _bioforma(py: Python, m: &PyModule) -> PyResult<()> {
     let sys = PyModule::import(py, "sys")?;
     let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
     sys_modules.set_item("bioforma.scores", m.getattr("scores")?)?;
-    
+
     m.add_wrapped(wrap_pymodule!(seq_analysis::seq_analysis))?;
     let sys = PyModule::import(py, "sys")?;
     let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
