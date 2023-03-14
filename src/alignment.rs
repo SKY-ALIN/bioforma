@@ -3,8 +3,9 @@ use pyo3::types::PyDict;
 use pyo3::wrap_pymodule;
 use pyo3::exceptions::PyValueError;
 use bio::alignment::distance::{
-    hamming as _hamming,
-    simd    as _simd,
+    hamming     as _hamming,
+    levenshtein as _levenshtein,
+    simd        as _simd,
 };
 
 #[pyfunction]
@@ -29,10 +30,16 @@ fn simd_hamming(alpha: &[u8], beta: &[u8]) -> PyResult<u64> {
     }
 }
 
+#[pyfunction]
+fn levenshtein(alpha: &[u8], beta: &[u8]) -> u32 {
+    _levenshtein(alpha, beta)
+}
+
 #[pymodule]
 fn distance(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(hamming, m)?)?;
     m.add_function(wrap_pyfunction!(simd_hamming, m)?)?;
+    m.add_function(wrap_pyfunction!(levenshtein, m)?)?;
     Ok(())
 }
 
