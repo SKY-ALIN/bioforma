@@ -4,6 +4,7 @@ use pyo3::wrap_pymodule;
 use pyo3::exceptions::PyValueError;
 use bio::alignment::distance::{
     hamming as _hamming,
+    simd    as _simd,
 };
 
 #[pyfunction]
@@ -17,9 +18,21 @@ fn hamming(alpha: &[u8], beta: &[u8]) -> PyResult<u64> {
     }
 }
 
+#[pyfunction]
+fn simd_hamming(alpha: &[u8], beta: &[u8]) -> PyResult<u64> {
+    if alpha.len() != beta.len() {
+        Err(PyValueError::new_err(
+            "hamming distance cannot be calculated for texts of different length"
+        ))
+    } else {
+        Ok(_simd::hamming(alpha, beta))
+    }
+}
+
 #[pymodule]
 fn distance(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(hamming, m)?)?;
+    m.add_function(wrap_pyfunction!(simd_hamming, m)?)?;
     Ok(())
 }
 
