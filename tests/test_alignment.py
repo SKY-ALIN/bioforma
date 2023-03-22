@@ -1,3 +1,13 @@
+from bioforma.alignment import (
+    Alignment,
+    AlignmentOperation,
+    Match,
+    Subst,
+    Del,
+    Ins,
+    Xclip,
+    Yclip,
+)
 from bioforma.alignment.distance import (
     hamming,
     simd_hamming,
@@ -52,3 +62,27 @@ def test_simd_bounded_levenshtein():
     assert simd_bounded_levenshtein(b'AAA', b'TTTT', max_value) == 4
     assert simd_bounded_levenshtein(x, y, 5) == 5
     assert simd_bounded_levenshtein(x, y, 4) is None
+
+
+def test_alignment_operations():
+    assert issubclass(Match, AlignmentOperation)
+    assert issubclass(Subst, AlignmentOperation)
+    assert issubclass(Del, AlignmentOperation)
+    assert issubclass(Ins, AlignmentOperation)
+    assert issubclass(Xclip, AlignmentOperation)
+    assert issubclass(Yclip, AlignmentOperation)
+
+
+def test_alignment():
+    alignment = Alignment(
+        score=5,
+        x_start=3,
+        y_start=0,
+        x_end=9,
+        y_end=10,
+        y_len=10,
+        x_len=10,
+        operations=[Match(), Match(), Match(), Subst(), Ins(), Ins(), Del(), Del()],
+        mode='semiglobal',
+    )
+    assert alignment is not None
