@@ -233,18 +233,14 @@ pub fn alphabets(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<RankTransform>()?;
 
     m.add_wrapped(wrap_pymodule!(dna))?;
-    let sys = PyModule::import(py, "sys")?;
-    let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
-    sys_modules.set_item("bioforma.alphabets.dna", m.getattr("dna")?)?;
-
     m.add_wrapped(wrap_pymodule!(protein))?;
-    let sys = PyModule::import(py, "sys")?;
-    let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
-    sys_modules.set_item("bioforma.alphabets.protein", m.getattr("protein")?)?;
-
     m.add_wrapped(wrap_pymodule!(rna))?;
+
     let sys = PyModule::import(py, "sys")?;
     let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
+
+    sys_modules.set_item("bioforma.alphabets.dna", m.getattr("dna")?)?;
+    sys_modules.set_item("bioforma.alphabets.protein", m.getattr("protein")?)?;
     sys_modules.set_item("bioforma.alphabets.rna", m.getattr("rna")?)?;
 
     Ok(())

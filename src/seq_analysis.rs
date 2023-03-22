@@ -113,13 +113,12 @@ fn gc(_py: Python, m: &PyModule) -> PyResult<()> {
 #[pymodule]
 pub fn seq_analysis(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(gc))?;
-    let sys = PyModule::import(py, "sys")?;
-    let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
-    sys_modules.set_item("bioforma.seq_analysis.gc", m.getattr("gc")?)?;
-
     m.add_wrapped(wrap_pymodule!(orf))?;
+
     let sys = PyModule::import(py, "sys")?;
     let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
+
+    sys_modules.set_item("bioforma.seq_analysis.gc", m.getattr("gc")?)?;
     sys_modules.set_item("bioforma.seq_analysis.orf", m.getattr("orf")?)?;
 
     Ok(())
