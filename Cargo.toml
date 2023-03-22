@@ -22,7 +22,6 @@ include = [
 [package.metadata.maturin]
 name = "bioforma._bioforma"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 name = "_bioforma"
 crate-type = ["cdylib"]
@@ -30,3 +29,4 @@ crate-type = ["cdylib"]
 [dependencies]
 pyo3 = "0.18.1"
 bio = "1.1.0"
+bio-types = "0.13.0"
