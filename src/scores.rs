@@ -1,5 +1,4 @@
-use pyo3::prelude::*;
-use pyo3::exceptions::PyValueError;
+#[rustfmt::skip]
 use bio::scores::{
     blosum62    as _blosum62,
     pam120      as _pam120,
@@ -7,16 +6,18 @@ use bio::scores::{
     pam250      as _pam250,
     pam40       as _pam40,
 };
+use pyo3::exceptions::PyValueError;
+use pyo3::prelude::*;
 
 const VALUE_ERROR_MSG: &str = "Can't accept more then 1 byte";
 
 fn score(a: &[u8], b: &[u8], func: fn(u8, u8) -> i32) -> PyResult<i32> {
     if a.len() != 1 {
-        return Err(PyValueError::new_err(VALUE_ERROR_MSG))
+        return Err(PyValueError::new_err(VALUE_ERROR_MSG));
     }
 
     if b.len() != 1 {
-        return Err(PyValueError::new_err(VALUE_ERROR_MSG))
+        return Err(PyValueError::new_err(VALUE_ERROR_MSG));
     }
 
     Ok(func(a[0], b[0]))

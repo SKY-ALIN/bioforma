@@ -1,30 +1,34 @@
-use std::collections::HashMap;
-use pyo3::prelude::*;
-use pyo3::wrap_pymodule;
-use pyo3::types::{IntoPyDict, PyBytes, PyDict};
-use pyo3::exceptions::PyValueError;
-use bio::alphabets::{
-    Alphabet        as _Alphabet,
-    RankTransform   as _RankTransform,
-};
+#[rustfmt::skip]
 use bio::alphabets::dna::{
     alphabet        as _dna_alphabet,
-    n_alphabet      as _dna_n_alphabet,
-    iupac_alphabet  as _dna_iupac_alphabet,
     complement      as _dna_complement,
+    iupac_alphabet  as _dna_iupac_alphabet,
+    n_alphabet      as _dna_n_alphabet,
     revcomp         as _dna_revcomp,
 };
+#[rustfmt::skip]
 use bio::alphabets::protein::{
     alphabet        as _protein_alphabet,
     iupac_alphabet  as _protein_iupac_alphabet,
 };
+#[rustfmt::skip]
 use bio::alphabets::rna::{
     alphabet        as _rna_alphabet,
-    n_alphabet      as _rna_n_alphabet,
-    iupac_alphabet  as _rna_iupac_alphabet,
     complement      as _rna_complement,
+    iupac_alphabet  as _rna_iupac_alphabet,
+    n_alphabet      as _rna_n_alphabet,
     revcomp         as _rna_revcomp,
 };
+#[rustfmt::skip]
+use bio::alphabets::{
+    Alphabet        as _Alphabet,
+    RankTransform   as _RankTransform,
+};
+use pyo3::exceptions::PyValueError;
+use pyo3::prelude::*;
+use pyo3::types::{IntoPyDict, PyBytes, PyDict};
+use pyo3::wrap_pymodule;
+use std::collections::HashMap;
 
 #[pyclass]
 struct Alphabet(_Alphabet);
@@ -36,7 +40,7 @@ impl Alphabet {
         if symbols.is_empty() {
             Err(PyValueError::new_err("Empty alphabet"))
         } else {
-            Ok(Alphabet ( _Alphabet::new(symbols) ))
+            Ok(Alphabet(_Alphabet::new(symbols)))
         }
     }
 
@@ -52,7 +56,10 @@ impl Alphabet {
 
     pub fn __repr__(&self) -> String {
         let v: Vec<u8> = self.0.symbols.clone().iter().map(|a| a as u8).collect();
-        format!("<Alphabet: {}>", String::from_utf8(v).unwrap_or("invalid".into()))
+        format!(
+            "<Alphabet: {}>",
+            String::from_utf8(v).unwrap_or("invalid".into())
+        )
     }
 
     pub fn __bytes__<'p>(&self, py: Python<'p>) -> &'p PyBytes {
@@ -64,11 +71,11 @@ impl Alphabet {
     }
 
     pub fn __and__(&self, other: &Alphabet) -> Self {
-        Alphabet ( self.0.intersection(&other.0) )
+        Alphabet(self.0.intersection(&other.0))
     }
 
     pub fn __or__(&self, other: &Alphabet) -> Self {
-        Alphabet ( self.0.union(&other.0) )
+        Alphabet(self.0.union(&other.0))
     }
 }
 
@@ -79,7 +86,7 @@ struct RankTransform(_RankTransform);
 impl RankTransform {
     #[new]
     pub fn new(alphabet: &Alphabet) -> Self {
-        RankTransform ( _RankTransform::new(&alphabet.0) )
+        RankTransform(_RankTransform::new(&alphabet.0))
     }
 
     pub fn get(&self, chr: &[u8]) -> PyResult<u8> {
@@ -91,10 +98,12 @@ impl RankTransform {
     }
 
     pub fn transform(&self, text: &[u8]) -> PyResult<Vec<u8>> {
-        let res = std::panic::catch_unwind(|| {self.0.transform(text)});
+        let res = std::panic::catch_unwind(|| self.0.transform(text));
         match res {
             Ok(res) => Ok(res),
-            Err(res) => Err(PyValueError::new_err(res.downcast::<String>().unwrap().to_string())),
+            Err(res) => Err(PyValueError::new_err(
+                res.downcast::<String>().unwrap().to_string(),
+            )),
         }
     }
 
@@ -117,11 +126,11 @@ impl RankTransform {
     }
 
     pub fn __repr__(&self) -> String {
-        let a: Vec<String> = self.0.ranks
+        let a: Vec<String> = self
+            .0
+            .ranks
             .iter()
-            .map(|(key, value)|
-                format!("{}-{}", char::from(key as u8), value)
-            )
+            .map(|(key, value)| format!("{}-{}", char::from(key as u8), value))
             .collect();
         format!("<RankTransform: {}>", a.join(", "))
     }
@@ -132,17 +141,17 @@ impl RankTransform {
 
 #[pyfunction]
 fn make_dna_alphabet() -> Alphabet {
-    Alphabet ( _dna_alphabet() )
+    Alphabet(_dna_alphabet())
 }
 
 #[pyfunction]
 fn make_dna_n_alphabet() -> Alphabet {
-    Alphabet ( _dna_n_alphabet() )
+    Alphabet(_dna_n_alphabet())
 }
 
 #[pyfunction]
 fn make_dna_iupac_alphabet() -> Alphabet {
-    Alphabet ( _dna_iupac_alphabet() )
+    Alphabet(_dna_iupac_alphabet())
 }
 
 #[pyfunction]
@@ -172,12 +181,12 @@ fn dna(_py: Python, m: &PyModule) -> PyResult<()> {
 
 #[pyfunction]
 fn make_protein_alphabet() -> Alphabet {
-    Alphabet ( _protein_alphabet() )
+    Alphabet(_protein_alphabet())
 }
 
 #[pyfunction]
 fn make_protein_iupac_alphabet() -> Alphabet {
-    Alphabet ( _protein_iupac_alphabet() )
+    Alphabet(_protein_iupac_alphabet())
 }
 
 #[pymodule]
@@ -189,17 +198,17 @@ fn protein(_py: Python, m: &PyModule) -> PyResult<()> {
 
 #[pyfunction]
 fn make_rna_alphabet() -> Alphabet {
-    Alphabet ( _rna_alphabet() )
+    Alphabet(_rna_alphabet())
 }
 
 #[pyfunction]
 fn make_rna_n_alphabet() -> Alphabet {
-    Alphabet ( _rna_n_alphabet() )
+    Alphabet(_rna_n_alphabet())
 }
 
 #[pyfunction]
 fn make_rna_iupac_alphabet() -> Alphabet {
-    Alphabet ( _rna_iupac_alphabet() )
+    Alphabet(_rna_iupac_alphabet())
 }
 
 #[pyfunction]
