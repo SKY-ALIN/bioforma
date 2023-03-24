@@ -65,6 +65,7 @@ def test_simd_bounded_levenshtein():
 
 
 def test_alignment_operations():
+    assert issubclass(AlignmentOperation, object)
     assert issubclass(Match, AlignmentOperation)
     assert issubclass(Subst, AlignmentOperation)
     assert issubclass(Del, AlignmentOperation)
@@ -72,8 +73,23 @@ def test_alignment_operations():
     assert issubclass(Xclip, AlignmentOperation)
     assert issubclass(Yclip, AlignmentOperation)
 
+    def check_magic_method(cls, *args):
+        assert hash(cls(*args)) == hash(cls(*args))
+        assert cls(*args) == cls(*args)
+        assert not (cls(*args) != cls(*args))
 
-def test_alignment():
+    check_magic_method(Match)
+    check_magic_method(Subst)
+    check_magic_method(Del)
+    check_magic_method(Ins)
+    check_magic_method(Xclip, 2)
+    check_magic_method(Yclip, 3)
+
+    assert Xclip(2) != Xclip(0)
+    assert Yclip(3) != Yclip(0)
+
+
+def test_alignment_cigar():
     alignment = Alignment(
         score=5,
         x_start=3,
@@ -85,4 +101,106 @@ def test_alignment():
         operations=[Match(), Match(), Match(), Subst(), Ins(), Ins(), Del(), Del()],
         mode='semiglobal',
     )
-    assert alignment is not None
+    assert alignment.cigar(False) == "3S3=1X2I2D1S"
+
+    alignment = Alignment(
+        score=5,
+        x_start=0,
+        y_start=5,
+        x_end=4,
+        y_end=10,
+        x_len=5,
+        y_len=10 ,
+        operations=[Yclip(5), Match(), Subst(), Subst(), Ins(), Del(), Del(), Xclip(1)],
+        mode='custom',
+    )
+    assert alignment.cigar(False) == "1=2X1I2D1S"
+    assert alignment.cigar(True) == "1=2X1I2D1H"
+
+    alignment = Alignment(
+        score=5,
+        x_start=0,
+        y_start=5,
+        x_end=3,
+        y_end=8,
+        x_len=3,
+        y_len=10,
+        operations=[Yclip(5), Subst(), Match(), Subst(), Yclip(2)],
+        mode='custom',
+    )
+    assert alignment.cigar(False) == "1X1=1X"
+
+    alignment = Alignment(
+        score=5,
+        x_start=0,
+        y_start=5,
+        x_end=3,
+        y_end=8,
+        x_len=3,
+        y_len=10,
+        operations=[Subst(), Match(), Subst()],
+        mode='custom',
+    )
+    assert alignment.cigar(False) == "1X1=1X"
+
+
+def test_alignment_pretty():
+    alignment = Alignment(
+        score=1,
+        x_start=0,
+        y_start=2,
+        x_end=3,
+        y_end=5,
+        x_len=2,
+        y_len=7,
+        operations=[Subst(), Match(), Match()],
+        mode='semiglobal',
+    )
+    assert alignment.pretty(b"GAT", b"CTAATCC") == (
+        "  GAT  \n"
+        "  \\||  \n"
+        "CTAATCC\n"
+        "\n\n"
+    )
+
+    alignment = Alignment(
+        score=5,
+        x_start=0,
+        y_start=5,
+        x_end=4,
+        y_end=10,
+        x_len=5,
+        y_len=10,
+        operations=[Yclip(5), Match(), Subst(), Subst(), Ins(), Del(), Del(), Xclip(1)],
+        mode='custom',
+    )
+    assert alignment.pretty(b"AAAAA", b"TTTTTTTTTT") == (
+        "     AAAA--A\n"
+        "     |\\\\+xx \n"
+        "TTTTTTTT-TT \n"
+        "\n\n"
+    )
+
+
+def test_alignment_path():
+    alignment = Alignment(
+        score=5,
+        x_start=3,
+        y_start=0,
+        x_end=9,
+        y_end=10,
+        y_len=10,
+        x_len=10,
+        operations=[Match(), Match(), Match(), Subst(), Ins(), Ins(), Del(), Del()],
+        mode='semiglobal',
+    )
+    assert alignment.path() == [
+        (4, 5, Match()),
+        (5, 6, Match()),
+        (6, 7, Match()),
+        (7, 8, Subst()),
+        (8, 8, Ins()),
+        (9, 8, Ins()),
+        (9, 9, Del()),
+        (9, 10, Del()),
+    ]

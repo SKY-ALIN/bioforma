@@ -1,17 +1,22 @@
-use pyo3::prelude::*;
-use pyo3::types::PyDict;
-use pyo3::wrap_pymodule;
-use pyo3::exceptions::PyValueError;
+#[rustfmt::skip]
 use bio::alignment::distance::{
     hamming             as _hamming,
     levenshtein         as _levenshtein,
     simd                as _simd,
 };
+#[rustfmt::skip]
 use bio_types::alignment::{
     Alignment           as _Alignment,
     AlignmentMode       as _AlignmentMode,
     AlignmentOperation  as _AlignmentOperation,
 };
+use pyo3::basic::CompareOp;
+use pyo3::exceptions::{PyNotImplementedError, PyValueError};
+use pyo3::prelude::*;
+use pyo3::types::PyDict;
+use pyo3::wrap_pymodule;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 #[pyclass(subclass)]
 struct AlignmentOperation(_AlignmentOperation);
@@ -40,11 +45,38 @@ struct Xclip(_AlignmentOperation);
 #[pyclass(extends=AlignmentOperation)]
 struct Yclip(_AlignmentOperation);
 
+fn hash(slf: _AlignmentOperation) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    slf.hash(&mut hasher);
+    hasher.finish()
+}
+
+fn richcmp(slf: _AlignmentOperation, other: _AlignmentOperation, op: CompareOp) -> PyResult<bool> {
+    match op {
+        CompareOp::Eq => Ok(slf == other),
+        CompareOp::Ne => Ok(slf != other),
+        _ => Err(PyNotImplementedError::new_err(
+            "Operation isn't supported for this type",
+        )),
+    }
+}
+
 #[pymethods]
 impl Match {
     #[new]
     pub fn new() -> (Self, AlignmentOperation) {
-        (Match(_AlignmentOperation::Match), AlignmentOperation(_AlignmentOperation::Match))
+        (
+            Match(_AlignmentOperation::Match),
+            AlignmentOperation(_AlignmentOperation::Match),
+        )
+    }
+
+    fn __hash__(&self) -> u64 {
+        hash(self.0)
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        richcmp(self.0, other.0, op)
     }
 
     pub fn __repr__(&self) -> String {
@@ -56,7 +88,18 @@ impl Match {
 impl Subst {
     #[new]
     pub fn new() -> (Self, AlignmentOperation) {
-        (Subst(_AlignmentOperation::Subst), AlignmentOperation(_AlignmentOperation::Subst))
+        (
+            Subst(_AlignmentOperation::Subst),
+            AlignmentOperation(_AlignmentOperation::Subst),
+        )
+    }
+
+    fn __hash__(&self) -> u64 {
+        hash(self.0)
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        richcmp(self.0, other.0, op)
     }
 
     pub fn __repr__(&self) -> String {
@@ -68,7 +111,18 @@ impl Subst {
 impl Del {
     #[new]
     pub fn new() -> (Self, AlignmentOperation) {
-        (Del(_AlignmentOperation::Del), AlignmentOperation(_AlignmentOperation::Del))
+        (
+            Del(_AlignmentOperation::Del),
+            AlignmentOperation(_AlignmentOperation::Del),
+        )
+    }
+
+    fn __hash__(&self) -> u64 {
+        hash(self.0)
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        richcmp(self.0, other.0, op)
     }
 
     pub fn __repr__(&self) -> String {
@@ -80,7 +134,18 @@ impl Del {
 impl Ins {
     #[new]
     pub fn new() -> (Self, AlignmentOperation) {
-        (Ins(_AlignmentOperation::Ins), AlignmentOperation(_AlignmentOperation::Ins))
+        (
+            Ins(_AlignmentOperation::Ins),
+            AlignmentOperation(_AlignmentOperation::Ins),
+        )
+    }
+
+    fn __hash__(&self) -> u64 {
+        hash(self.0)
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        richcmp(self.0, other.0, op)
     }
 
     pub fn __repr__(&self) -> String {
@@ -92,7 +157,18 @@ impl Ins {
 impl Xclip {
     #[new]
     pub fn new(x: usize) -> (Self, AlignmentOperation) {
-        (Xclip(_AlignmentOperation::Xclip(x)), AlignmentOperation(_AlignmentOperation::Xclip(x)))
+        (
+            Xclip(_AlignmentOperation::Xclip(x)),
+            AlignmentOperation(_AlignmentOperation::Xclip(x)),
+        )
+    }
+
+    fn __hash__(&self) -> u64 {
+        hash(self.0)
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        richcmp(self.0, other.0, op)
     }
 
     pub fn __repr__(&self) -> Option<String> {
@@ -106,14 +182,43 @@ impl Xclip {
 #[pymethods]
 impl Yclip {
     #[new]
-    pub fn new(x: usize) -> (Self, AlignmentOperation) {
-        (Yclip(_AlignmentOperation::Yclip(x)), AlignmentOperation(_AlignmentOperation::Yclip(x)))
+    pub fn new(y: usize) -> (Self, AlignmentOperation) {
+        (
+            Yclip(_AlignmentOperation::Yclip(y)),
+            AlignmentOperation(_AlignmentOperation::Yclip(y)),
+        )
+    }
+
+    fn __hash__(&self) -> u64 {
+        hash(self.0)
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        richcmp(self.0, other.0, op)
     }
 
     pub fn __repr__(&self) -> Option<String> {
         match self.0 {
             _AlignmentOperation::Yclip(y) => Some(format!("<Yclip: y={}>", y)),
             _ => None,
+        }
+    }
+}
+
+fn rust_bio_alignment_operation_into_py_object(
+    _operation: _AlignmentOperation,
+    py: Python,
+) -> Option<PyObject> {
+    match _operation {
+        _AlignmentOperation::Match => PyCell::new(py, Match::new()).ok().map(|o| o.to_object(py)),
+        _AlignmentOperation::Subst => PyCell::new(py, Subst::new()).ok().map(|o| o.to_object(py)),
+        _AlignmentOperation::Del => PyCell::new(py, Del::new()).ok().map(|o| o.to_object(py)),
+        _AlignmentOperation::Ins => PyCell::new(py, Ins::new()).ok().map(|o| o.to_object(py)),
+        _AlignmentOperation::Xclip(x) => {
+            PyCell::new(py, Xclip::new(x)).ok().map(|o| o.to_object(py))
+        }
+        _AlignmentOperation::Yclip(y) => {
+            PyCell::new(py, Yclip::new(y)).ok().map(|o| o.to_object(py))
         }
     }
 }
@@ -147,20 +252,43 @@ impl Alignment {
             "semiglobal" => Ok(_AlignmentMode::Semiglobal),
             "global" => Ok(_AlignmentMode::Global),
             "custom" => Ok(_AlignmentMode::Custom),
-            _ => Err(PyValueError::new_err(format!("{} can't be used as the mode", mode))),
+            _ => Err(PyValueError::new_err(format!(
+                "{} can't be used as the mode",
+                mode
+            ))),
         };
 
-        Ok(Alignment(_Alignment{
+        Ok(Alignment(_Alignment {
             score,
             xstart: x_start,
             ystart: y_start,
             xend: x_end,
             yend: y_end,
-            ylen: x_len,
-            xlen: y_len,
+            xlen: x_len,
+            ylen: y_len,
             operations: _operations,
             mode: _mode?,
         }))
+    }
+
+    pub fn cigar(&self, hard_clip: bool) -> String {
+        self.0.cigar(hard_clip)
+    }
+
+    pub fn pretty(&self, x: &[u8], y: &[u8]) -> String {
+        self.0.pretty(x, y)
+    }
+
+    pub fn path(&self, py: Python) -> Vec<(usize, usize, Option<PyObject>)> {
+        self.0
+            .path()
+            .into_iter()
+            .map(|(a, b, _alignment_operation)| {
+                let operation =
+                    rust_bio_alignment_operation_into_py_object(_alignment_operation, py);
+                (a, b, operation)
+            })
+            .collect()
     }
 
     pub fn __repr__(&self) -> String {
@@ -175,7 +303,7 @@ impl Alignment {
 fn hamming(alpha: &[u8], beta: &[u8]) -> PyResult<u64> {
     if alpha.len() != beta.len() {
         Err(PyValueError::new_err(
-            "hamming distance cannot be calculated for texts of different length"
+            "hamming distance cannot be calculated for texts of different length",
         ))
     } else {
         Ok(_hamming(alpha, beta))
@@ -186,7 +314,7 @@ fn hamming(alpha: &[u8], beta: &[u8]) -> PyResult<u64> {
 fn simd_hamming(alpha: &[u8], beta: &[u8]) -> PyResult<u64> {
     if alpha.len() != beta.len() {
         Err(PyValueError::new_err(
-            "hamming distance cannot be calculated for texts of different length"
+            "hamming distance cannot be calculated for texts of different length",
         ))
     } else {
         Ok(_simd::hamming(alpha, beta))
