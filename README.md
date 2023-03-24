@@ -10,7 +10,7 @@ Install using `pip install bioforma`.
 
 ⚠️ In the active development phase. ⚠️
 
-Progress tree (14/92):
+Progress tree (15/92):
 
 - [ ] alignment
   - [x] **distance.rs**
@@ -92,7 +92,7 @@ Progress tree (14/92):
     - [ ] errors.rs
   - [ ] text.rs
 - [ ] types (rust-bio-types)
-  - [ ] alignment.rs
+  - [x] **alignment.rs**
   - [ ] annot
     - [ ] contig.rs
     - [ ] loc.rs
