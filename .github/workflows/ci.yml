@@ -37,7 +37,7 @@ jobs:
   linux-build:
     name: Build for Linux
     runs-on: ubuntu-latest
-    needs: [check, clippy, fmt]
+    needs: [clippy, fmt]
     strategy:
       matrix:
         target: [x86_64, x86, aarch64, armv7, s390x, ppc64le]
