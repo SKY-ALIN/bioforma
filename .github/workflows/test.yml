@@ -2,8 +2,9 @@ name: Test
 
 on:
   workflow_run:
-    workflows: [Build]
-    types: [completed]
+    workflows: ["build"]
+    types:
+      - completed
 
 jobs:
   linux-test:
