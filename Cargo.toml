@@ -27,6 +27,13 @@ name = "_bioforma"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.18.1", features = ["extension-module", "generate-import-lib"] }
+pyo3 = "0.18.1"
 bio = "1.1.0"
 bio-types = "0.13.0"
+
+[features]
+extension-module = ["pyo3/extension-module"]
+default = ["pyo3/generate-import-lib"]
+
+[build-dependencies]
+pyo3-build-config = "0.18.2"
