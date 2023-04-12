@@ -1,0 +1,17 @@
+name: Test
+
+on: [push]
+
+jobs:
+  linux-test:
+    name: Test on Linux
+    needs: [linux-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - run: pip install bioforma --find-links dist --force-reinstall
+      - run: pip install pytest
+      - run: pytest
