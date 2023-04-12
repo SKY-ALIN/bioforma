@@ -2,7 +2,7 @@ name: Build
 
 on:
   workflow_run:
-    workflows: ["Code Quality"]
+    workflows: ["codequality"]
     types: [completed]
 
 jobs:
