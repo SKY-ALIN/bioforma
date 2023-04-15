@@ -54,6 +54,8 @@ jobs:
           sccache: 'true'
           manylinux: auto
 
+      - run: ls -lh dist/
+
       - run: rm -r bioforma
       - run: pip install pytest
       - run: pip install bioforma --no-index --no-deps --find-links dist --force-reinstall
