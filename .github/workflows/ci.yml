@@ -158,7 +158,8 @@ jobs:
 
       - run: ls -lh dist/
 
-      - name: Install & test
+      - name: Install & test (x86_64)
+        if: ${{ startsWith(matrix.target, 'x86_64') }}
         shell: bash
         run: |
           rm -r bioforma
@@ -167,6 +168,27 @@ jobs:
           pytest
 
       - name: Upload wheels
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: dist
+
+  build-sdist:
+    name: Build sdist
+    runs-on: ubuntu-latest
+    needs: [linux-build, windows-build, macos-build]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+          rust-toolchain: stable
+
+      - run: ls -lh dist/
+
+      - name: Upload sdist
         uses: actions/upload-artifact@v3
         with:
           name: wheels
