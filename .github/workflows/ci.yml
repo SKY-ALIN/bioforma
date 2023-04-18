@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   clippy:
-    name: Clippy
+    name: Clippy check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -20,7 +20,7 @@ jobs:
           name: Clippy Output
 
   fmt:
-    name: Rustfmt
+    name: Rustfmt check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -35,7 +35,7 @@ jobs:
           args: --all -- --check
 
   linux-build:
-    name: Build for Linux
+    name: Build and test for Linux
     runs-on: ubuntu-latest
     needs: [clippy, fmt]
     strategy:
@@ -67,8 +67,8 @@ jobs:
 
       - run: ls -lh dist/
 
-      - name: install & test
-        if: ${{ startsWith(matrix.target, 'x86') || startsWith(matrix.target, 'i686') }}
+      - name: Install & test (x86_64)
+        if: ${{ startsWith(matrix.target, 'x86_64') }}
         shell: bash
         run: |
           rm -r bioforma
@@ -76,8 +76,8 @@ jobs:
           pip install bioforma --no-index --no-deps --find-links dist --force-reinstall
           pytest
 
-      - name: install & test
-        if: ${{ !startsWith(matrix.target, 'x86') && !startsWith(matrix.target, 'i686') }}
+      - name: Install & test (aarch64, armv7, s390x, ppc64le)
+        if: ${{ !startsWith(matrix.target, 'x86_64') && !startsWith(matrix.target, 'i686') }}
         uses: uraimo/run-on-arch-action@v2.5.0
         with:
           arch: ${{ matrix.target }}
@@ -91,6 +91,44 @@ jobs:
             python3 -m pip install -U pip pytest
             python3 -m pip install bioforma --no-index --no-deps --find-links dist --force-reinstall
             pytest
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: dist
+
+  windows-build:
+    name: Build and test for Windows
+    runs-on: windows-latest
+    needs: [clippy, fmt]
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x64, x86]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          architecture: ${{ matrix.target }}
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --interpreter 3.7 3.8 3.9 3.10 3.11
+          manylinux: 'auto'
+          rust-toolchain: stable
+
+      - run: dir dist/
+
+      - name: Install & test
+        shell: bash
+        run: |
+          rm -r bioforma
+          pip install pytest
+          pip install bioforma --no-index --no-deps --find-links dist --force-reinstall
+          pytest
 
       - name: Upload wheels
         uses: actions/upload-artifact@v3
