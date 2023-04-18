@@ -41,19 +41,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [x86]
+        target: [x86_64, x86]
         manylinux: [auto]
         include:
-          - target: x86_64
-            manylinux: musllinux_1_1
           - target: aarch64
-            manylinux: messense/manylinux_2_24-cross:aarch64
+            container: messense/manylinux_2_24-cross:aarch64
           - target: armv7
-            manylinux: messense/manylinux_2_24-cross:armv7
+            container: messense/manylinux_2_24-cross:armv7
           - target: s390x
-            manylinux: messense/manylinux_2_24-cross:ppc64le
+            container: messense/manylinux_2_24-cross:ppc64le
           - target: ppc64le
-            manylinux: messense/manylinux_2_24-cross:s390x
+            container: messense/manylinux_2_24-cross:s390x
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
