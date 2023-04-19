@@ -1,11 +1,11 @@
 [project]
-name = "bioforma"
-requires-python = ">=3.7"
+name = 'bioforma'
+requires-python = '>=3.7'
 authors = [
-    {name = "Vladimir Alinsky", email = "Vladimir@Alinsky.tech"}
+    {name = 'Vladimir Alinsky', email = 'Vladimir@Alinsky.tech'}
 ]
 classifiers = [
-    'Development Status :: 1 - Planning',
+    'Development Status :: 3 - Alpha',
     'License :: OSI Approved :: MIT License',
     'Programming Language :: Rust',
     'Programming Language :: Python',
@@ -16,8 +16,8 @@ classifiers = [
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
+    'Programming Language :: Python :: Implementation :: CPython',
+    'Programming Language :: Python :: Implementation :: PyPy',
     'Operating System :: POSIX :: Linux',
     'Operating System :: Microsoft :: Windows',
     'Operating System :: MacOS',
@@ -28,8 +28,8 @@ Homepage = 'https://github.com/SKY-ALIN/bioforma'
 Source = 'https://github.com/SKY-ALIN/bioforma'
 
 [tool.maturin]
-features = ["pyo3/extension-module"]
+features = ['pyo3/extension-module']
 
 [build-system]
-requires = ["maturin>=0.14,<0.15"]
-build-backend = "maturin"
+requires = ['maturin>=0.14,<0.15']
+build-backend = 'maturin'
