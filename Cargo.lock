@@ -86,7 +86,7 @@ dependencies = [
 
 [[package]]
 name = "bioforma"
-version = "0.0.0"
+version = "0.1.0-alpha0"
 dependencies = [
  "bio",
  "bio-types",
