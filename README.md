@@ -2,6 +2,9 @@
 
 Rust-bio wrap for Python. Use the speed of Rust with the Python's high-level for bioinformatics challenges.
 
+![CI](https://github.com/SKY-ALIN/bioforma/actions/workflows/ci.yml/badge.svg)
+[![license](https://img.shields.io/github/license/SKY-ALIN/bioforma.svg)](https://github.com/SKY-ALIN/bioforma/blob/main/LICENSE)
+
 ## Installation
 
 Install using `pip install bioforma`.
@@ -107,4 +110,4 @@ Progress tree (15/92):
 
 ---
 
-Under [MIT Licence](https://opensource.org/license/mit/).
+Under [MIT Licence](https://github.com/SKY-ALIN/bioforma/blob/main/LICENSE).
