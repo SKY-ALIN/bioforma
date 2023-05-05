@@ -1,23 +1,3 @@
-use bio::alignment::pairwise::{
-    Scoring             as _Scoring,
-    Aligner             as _Aligner,
-    MatchParams         as _MatchParams,
-    MatchFunc           as _MatchFunc,
-};
-#[rustfmt::skip]
-use bio::alignment::distance::{
-    hamming             as _hamming,
-    levenshtein         as _levenshtein,
-    simd                as _simd,
-};
-#[rustfmt::skip]
-use bio::scores::{
-    blosum62    as _blosum62,
-    pam120      as _pam120,
-    pam200      as _pam200,
-    pam250      as _pam250,
-    pam40       as _pam40,
-};
 #[rustfmt::skip]
 use bio_types::alignment::{
     Alignment           as _Alignment,
@@ -27,14 +7,11 @@ use bio_types::alignment::{
 use pyo3::basic::CompareOp;
 use pyo3::exceptions::{PyNotImplementedError, PyValueError};
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyType};
-use pyo3::wrap_pymodule;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
-use std::ops::Deref;
 
 #[pyclass(subclass)]
-struct AlignmentOperation(_AlignmentOperation);
+pub struct AlignmentOperation(_AlignmentOperation);
 
 impl AlignmentOperation {
     fn get_operation(&self) -> _AlignmentOperation {
@@ -43,22 +20,22 @@ impl AlignmentOperation {
 }
 
 #[pyclass(extends=AlignmentOperation)]
-struct Match(_AlignmentOperation);
+pub struct Match(_AlignmentOperation);
 
 #[pyclass(extends=AlignmentOperation)]
-struct Subst(_AlignmentOperation);
+pub struct Subst(_AlignmentOperation);
 
 #[pyclass(extends=AlignmentOperation)]
-struct Del(_AlignmentOperation);
+pub struct Del(_AlignmentOperation);
 
 #[pyclass(extends=AlignmentOperation)]
-struct Ins(_AlignmentOperation);
+pub struct Ins(_AlignmentOperation);
 
 #[pyclass(extends=AlignmentOperation)]
-struct Xclip(_AlignmentOperation);
+pub struct Xclip(_AlignmentOperation);
 
 #[pyclass(extends=AlignmentOperation)]
-struct Yclip(_AlignmentOperation);
+pub struct Yclip(_AlignmentOperation);
 
 fn hash(slf: _AlignmentOperation) -> u64 {
     let mut hasher = DefaultHasher::new();
@@ -231,15 +208,15 @@ fn rust_bio_alignment_operation_into_py_object(
         _AlignmentOperation::Ins => PyCell::new(py, Ins::new()).ok().map(|o| o.to_object(py)),
         _AlignmentOperation::Xclip(x) => {
             PyCell::new(py, Xclip::new(x)).ok().map(|o| o.to_object(py))
-        },
+        }
         _AlignmentOperation::Yclip(y) => {
             PyCell::new(py, Yclip::new(y)).ok().map(|o| o.to_object(py))
-        },
+        }
     }
 }
 
 #[pyclass]
-struct Alignment(_Alignment);
+pub struct Alignment(_Alignment);
 
 #[pymethods]
 impl Alignment {
@@ -312,129 +289,4 @@ impl Alignment {
             self.0.score, self.0.xstart, self.0.ystart, self.0.xend, self.0.yend, self.0.xlen, self.0.ylen, self.0.operations, self.0.mode
         )
     }
-}
-
-#[pyclass]
-struct Scoring(_Scoring<Box<dyn Fn(u8, u8) -> i32 + Send>>);
-
-#[pymethods]
-impl Scoring {
-    #[new]
-    pub fn new(gap_open: i32, gap_extend: i32, match_func: &str) -> PyResult<Self> {
-        // TODO: check gap_open and gap_extend
-        let func: PyResult<fn(u8, u8) -> i32> = match match_func {
-            "blosum62" => Ok(_blosum62),
-            "pam120" => Ok(_pam120),
-            "pam200" => Ok(_pam200),
-            "pam250" => Ok(_pam250),
-            "pam40" => Ok(_pam40),
-            _ => Err(PyValueError::new_err("")),
-        };
-
-        Ok(Scoring(_Scoring::new(gap_open, gap_extend, Box::new(func?))))
-    }
-
-    #[classmethod]
-    pub fn from_scores(
-        _cls: &PyType,
-        gap_open: i32,
-        gap_extend: i32,
-        match_score: i32,
-        mismatch_score: i32,
-    ) -> Self {
-        // TODO: check gap_open, gap_extend, match_score, mismatch_score
-        let func = move |a: u8, b: u8| {
-            if a == b {
-                match_score
-            } else {
-                mismatch_score
-            }
-        };
-        Scoring(_Scoring::new(gap_open, gap_extend, Box::new(func)))
-    }
-}
-
-#[pyclass]
-struct PairwiseAligner(_Aligner<Box<dyn Fn(u8, u8) -> i32 + Send>>);
-
-#[pymethods]
-impl PairwiseAligner {
-    #[classmethod]
-    pub fn from_scoring(
-        _cls: &PyType,
-        scoring: &Scoring,
-    ) -> Self {
-        // PairwiseAligner(_Aligner::with_scoring(scoring.0))
-        todo!()
-    }
-}
-
-#[pyfunction]
-fn hamming(alpha: &[u8], beta: &[u8]) -> PyResult<u64> {
-    if alpha.len() != beta.len() {
-        Err(PyValueError::new_err(
-            "hamming distance cannot be calculated for texts of different length",
-        ))
-    } else {
-        Ok(_hamming(alpha, beta))
-    }
-}
-
-#[pyfunction]
-fn simd_hamming(alpha: &[u8], beta: &[u8]) -> PyResult<u64> {
-    if alpha.len() != beta.len() {
-        Err(PyValueError::new_err(
-            "hamming distance cannot be calculated for texts of different length",
-        ))
-    } else {
-        Ok(_simd::hamming(alpha, beta))
-    }
-}
-
-#[pyfunction]
-fn levenshtein(alpha: &[u8], beta: &[u8]) -> u32 {
-    _levenshtein(alpha, beta)
-}
-
-#[pyfunction]
-fn simd_levenshtein(alpha: &[u8], beta: &[u8]) -> u32 {
-    _simd::levenshtein(alpha, beta)
-}
-
-#[pyfunction]
-fn simd_bounded_levenshtein(alpha: &[u8], beta: &[u8], k: u32) -> Option<u32> {
-    _simd::bounded_levenshtein(alpha, beta, k)
-}
-
-#[pymodule]
-fn distance(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(hamming, m)?)?;
-    m.add_function(wrap_pyfunction!(simd_hamming, m)?)?;
-    m.add_function(wrap_pyfunction!(levenshtein, m)?)?;
-    m.add_function(wrap_pyfunction!(simd_levenshtein, m)?)?;
-    m.add_function(wrap_pyfunction!(simd_bounded_levenshtein, m)?)?;
-    Ok(())
-}
-
-#[pymodule]
-pub fn alignment(py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<AlignmentOperation>()?;
-    m.add_class::<Match>()?;
-    m.add_class::<Subst>()?;
-    m.add_class::<Del>()?;
-    m.add_class::<Ins>()?;
-    m.add_class::<Xclip>()?;
-    m.add_class::<Yclip>()?;
-    m.add_class::<Alignment>()?;
-
-    // m.add_class::<Scoring>()?;
-    m.add_class::<Scoring>()?;
-    m.add_class::<PairwiseAligner>()?;
-
-    m.add_wrapped(wrap_pymodule!(distance))?;
-    let sys = PyModule::import(py, "sys")?;
-    let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
-    sys_modules.set_item("bioforma.alignment.distance", m.getattr("distance")?)?;
-
-    Ok(())
 }

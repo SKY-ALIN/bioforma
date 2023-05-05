@@ -69,3 +69,19 @@ class Alignment:
     def cigar(self, hard_clip: bool) -> str: ...
     def pretty(self, x: bytes, y: bytes) -> str: ...
     def path(self) -> tuple[int, int, AlignmentOperation]: ...
+
+
+# class BaseScoring: ...
+# 
+# 
+# class MatchScoring(BaseScoring):
+#     def __new__(cls, gap_open: int, gap_extend: int, match_score: int, mismatch_score: int) -> MatchScoring: ...
+# 
+# 
+# class SubstitutionMatrixScoring(BaseScoring):
+#     def __new__(
+#             cls,
+#             gap_open: int,
+#             gap_extend: int,
+#             match_func: Literal['blosum62', 'pam120', 'pam200', 'pam250', 'pam40'],
+#     ) -> SubstitutionMatrixScoring: ...
