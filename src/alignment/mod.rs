@@ -4,6 +4,7 @@ use pyo3::wrap_pymodule;
 
 mod alignment_type;
 mod distance;
+mod scoring;
 
 #[pymodule]
 pub fn alignment(py: Python, m: &PyModule) -> PyResult<()> {
@@ -15,6 +16,12 @@ pub fn alignment(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<alignment_type::Xclip>()?;
     m.add_class::<alignment_type::Yclip>()?;
     m.add_class::<alignment_type::Alignment>()?;
+    m.add_class::<scoring::Scoring>()?;
+    m.add(
+        "DEFAULT_ALIGNER_CAPACITY",
+        scoring::DEFAULT_ALIGNER_CAPACITY,
+    )?;
+    m.add_class::<scoring::PairwiseAligner>()?;
 
     m.add_wrapped(wrap_pymodule!(distance::distance))?;
     let sys = PyModule::import(py, "sys")?;

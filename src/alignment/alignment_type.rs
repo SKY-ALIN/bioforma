@@ -216,7 +216,7 @@ fn rust_bio_alignment_operation_into_py_object(
 }
 
 #[pyclass]
-pub struct Alignment(_Alignment);
+pub struct Alignment(pub _Alignment);
 
 #[pymethods]
 impl Alignment {

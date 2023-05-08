@@ -71,17 +71,25 @@ class Alignment:
     def path(self) -> tuple[int, int, AlignmentOperation]: ...
 
 
-# class BaseScoring: ...
-# 
-# 
-# class MatchScoring(BaseScoring):
-#     def __new__(cls, gap_open: int, gap_extend: int, match_score: int, mismatch_score: int) -> MatchScoring: ...
-# 
-# 
-# class SubstitutionMatrixScoring(BaseScoring):
-#     def __new__(
-#             cls,
-#             gap_open: int,
-#             gap_extend: int,
-#             match_func: Literal['blosum62', 'pam120', 'pam200', 'pam250', 'pam40'],
-#     ) -> SubstitutionMatrixScoring: ...
+class Scoring:
+    def __new__(
+            cls,
+            gap_open: int,
+            gap_extend: int,
+            match_func: Literal['blosum62', 'pam120', 'pam200', 'pam250', 'pam40'],
+    ) -> Scoring: ...
+    @classmethod
+    def from_scores(cls, gap_open: int, gap_extend: int, match_score: int, mismatch_score: int) -> Scoring: ...
+
+
+DEFAULT_ALIGNER_CAPACITY: int
+
+
+class PairwiseAligner:
+    def __new__(
+            cls,
+            scoring: Scoring,
+            m: int = DEFAULT_ALIGNER_CAPACITY,
+            n: int = DEFAULT_ALIGNER_CAPACITY,
+    ) -> PairwiseAligner: ...
+    def custom(self, x: bytes, y: bytes) -> Alignment: ...
