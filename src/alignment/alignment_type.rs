@@ -319,8 +319,21 @@ impl Alignment {
         }
     }
 
-    pub fn cigar(&self, hard_clip: bool) -> String {
-        self.0.cigar(hard_clip)
+    pub fn cigar(&self, hard_clip: bool) -> PyResult<String> {
+        match self.0.mode {
+            _AlignmentMode::Global => {
+                return Err(PyValueError::new_err(
+                    "Cigar is not supported for Global Alignment mode",
+                ))
+            }
+            _AlignmentMode::Local => {
+                return Err(PyValueError::new_err(
+                    "Cigar is not supported for Local Alignment mode",
+                ))
+            }
+            _ => {}
+        }
+        Ok(self.0.cigar(hard_clip))
     }
 
     pub fn pretty(&self, x: &[u8], y: &[u8]) -> String {

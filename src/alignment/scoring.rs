@@ -485,12 +485,12 @@ impl PairwiseAligner {
         }
     }
 
-    pub fn custom(&mut self, x: &[u8], y: &[u8]) -> PyResult<Alignment> {
+    pub fn calculate_custom(&mut self, x: &[u8], y: &[u8]) -> PyResult<Alignment> {
         let unwrapped_alignment = self.calculate_unwrapped_custom_alignment(x, y)?;
         Ok(Alignment(unwrapped_alignment))
     }
 
-    pub fn global(&mut self, x: &[u8], y: &[u8]) -> PyResult<Alignment> {
+    pub fn calculate_global(&mut self, x: &[u8], y: &[u8]) -> PyResult<Alignment> {
         // Store the current clip penalties
         let clip_penalties = [
             self.scoring.xclip_prefix,
@@ -518,7 +518,7 @@ impl PairwiseAligner {
         Ok(Alignment(alignment))
     }
 
-    pub fn semiglobal(&mut self, x: &[u8], y: &[u8]) -> PyResult<Alignment> {
+    pub fn calculate_semiglobal(&mut self, x: &[u8], y: &[u8]) -> PyResult<Alignment> {
         // Store the current clip penalties
         let clip_penalties = [
             self.scoring.xclip_prefix,
@@ -549,7 +549,7 @@ impl PairwiseAligner {
         Ok(Alignment(alignment))
     }
 
-    pub fn local(&mut self, x: &[u8], y: &[u8]) -> PyResult<Alignment> {
+    pub fn calculate_local(&mut self, x: &[u8], y: &[u8]) -> PyResult<Alignment> {
         // Store the current clip penalties
         let clip_penalties = [
             self.scoring.xclip_prefix,

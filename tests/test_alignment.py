@@ -1,3 +1,5 @@
+from itertools import repeat
+
 from bioforma.alignment import (
     Alignment,
     AlignmentOperation,
@@ -237,22 +239,12 @@ def test_constants():
     assert DEFAULT_ALIGNER_CAPACITY == 200
 
 
-def test_scoring():
-    s1 = Scoring(-5, -1, 'blosum62')
-    s2 = Scoring.from_scores(-5, -1, 1, -1)
-    pa = PairwiseAligner(s1)
-    x = b"GGGGGGACGTACGTACGT"
-    y = b"AAAAACGTACGTACGTAAAA"
-    a = pa.custom(x, y)
-    print(a)
-
-
 def test_semiglobal_pairwise_aligner():
     x = b"ACCGTGGAT"
     y = b"AAAAACCGTTGAT"
     scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-1)
     aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
-    alignment = aligner.semiglobal(x, y)
+    alignment = aligner.calculate_semiglobal(x, y)
     assert alignment.y_start == 4
     assert alignment.x_start == 0
     assert alignment.operations == [
@@ -273,7 +265,7 @@ def test_semiglobal_gap_open_lt_mismatch_pairwise_aligner():
     y = b"AAAAACCGTTGAT"
     scoring = Scoring.from_scores(-1, -1, match_score=1, mismatch_score=-5)
     aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
-    alignment = aligner.semiglobal(x, y)
+    alignment = aligner.calculate_semiglobal(x, y)
     assert alignment.y_start == 4
     assert alignment.x_start == 0
     assert alignment.operations == [
@@ -284,6 +276,373 @@ def test_semiglobal_gap_open_lt_mismatch_pairwise_aligner():
         Del(),
         Match(),
         Ins(),
+        Match(),
+        Match(),
+        Match(),
+    ]
+
+
+def test_global_affine_ins_pairwise_aligner():
+    x = b"ACGAGAACA"
+    y = b"ACGACA"
+    scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-3)
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.calculate_global(x, y)
+    assert alignment.operations == [
+        Match(),
+        Match(),
+        Match(),
+        Ins(),
+        Ins(),
+        Ins(),
+        Match(),
+        Match(),
+        Match(),
+    ]
+
+
+def test_global_affine_ins2_pairwise_aligner():
+    x = b"AGATAGATAGATAGGGAGTTGTGTAGATGATCCACAGT"
+    y = b"AGATAGATAGATGTAGATGATCCACAGT"
+    scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-1)
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.calculate_global(x, y)
+    operations: list[AlignmentOperation] = (
+        list(repeat(Match(), 11))
+        + list(repeat(Ins(), 10))
+        + list(repeat(Match(), 17))
+    )
+    assert alignment.operations == operations
+
+
+def test_local_affine_ins2_pairwise_aligner():
+    x = b"ACGTATCATAGATAGATAGGGTTGTGTAGATGATCCACAG"
+    y = b"CGTATCATAGATAGATGTAGATGATCCACAGT"
+    scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-1)
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.calculate_local(x, y)
+    assert alignment.x_start == 1
+    assert alignment.y_start == 0
+
+
+def test_local_pairwise_aligner():
+    x = b"ACCGTGGAT"
+    y = b"AAAAACCGTTGAT"
+    scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-1)
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.calculate_local(x, y)
+    assert alignment.x_start == 0
+    assert alignment.y_start == 4
+    assert alignment.operations == [
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Subst(),
+        Match(),
+        Match(),
+        Match(),
+    ]
+
+
+def test_global_pairwise_aligner():
+    x = b"ACCGTGGAT"
+    y = b"AAAAACCGTTGAT"
+    scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-1)
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.calculate_global(x, y)
+    assert alignment.x_start == 0
+    assert alignment.y_start == 0
+    assert alignment.operations == [
+        Del(),
+        Del(),
+        Del(),
+        Del(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Subst(),
+        Match(),
+        Match(),
+        Match(),
+    ]
+
+
+def test_blosum62_pairwise_aligner():
+    x = b"AAAA"
+    y = b"AAAA"
+    scoring = Scoring(-5, -1, 'blosum62')
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.calculate_global(x, y)
+    assert alignment.x_start == 0
+    assert alignment.y_start == 0
+    assert alignment.score == 16
+    assert alignment.operations == [
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+    ]
+
+
+def test_blosum62_local_pairwise_aligner():
+    x = b"LSPADKTNVKAA"
+    y = b"PEEKSAV"
+    scoring = Scoring(-10, -1, 'blosum62')
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.calculate_local(x, y)
+    assert alignment.x_start == 2
+    assert alignment.y_start == 0
+    assert alignment.x_end == 9
+    assert alignment.y_end == 7
+    assert alignment.score == 16
+    assert alignment.operations == [
+        Match(),
+        Subst(),
+        Subst(),
+        Match(),
+        Subst(),
+        Subst(),
+        Match(),
+    ]
+
+
+def test_issue11_pairwise_aligner():
+    y = b"TACC"
+    x = b"AAAAACC"
+    scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-1)
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.calculate_global(x, y)
+    assert alignment.x_start == 0
+    assert alignment.y_start == 0
+    assert alignment.operations == [
+        Ins(),
+        Ins(),
+        Ins(),
+        Subst(),
+        Match(),
+        Match(),
+        Match(),
+    ]
+
+
+def test_issue12_1_pairwise_aligner():
+    x = b"CCGGCA"
+    y = b"ACCGTTGACGC"
+    scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-1)
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.calculate_semiglobal(x, y)
+    assert alignment.x_start == 0
+    assert alignment.y_start == 1
+    assert alignment.operations == [
+        Match(),
+        Match(),
+        Match(),
+        Subst(),
+        Subst(),
+        Subst(),
+    ]
+
+
+def test_issue12_2_pairwise_aligner():
+    x = b"ACCGTTGACGC"
+    y = b"CCGGCA"
+    scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-1)
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.calculate_semiglobal(x, y)
+    assert alignment.x_start == 0
+    assert alignment.y_start == 0
+    assert alignment.operations == [
+        Subst(),
+        Match(),
+        Ins(),
+        Ins(),
+        Ins(),
+        Ins(),
+        Ins(),
+        Ins(),
+        Subst(),
+        Match(),
+        Match(),
+    ]
+
+
+def test_issue12_3_pairwise_aligner():
+    x = b"AAAAACCGTTGACGCAA"
+    y = b"CCGTCCGGCAA"
+    scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-1)
+
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.calculate_semiglobal(x, y)
+    assert alignment.x_start == 0
+    assert alignment.operations == [
+        Ins(),
+        Ins(),
+        Ins(),
+        Ins(),
+        Ins(),
+        Ins(),
+        Match(),
+        Subst(),
+        Subst(),
+        Match(),
+        Subst(),
+        Subst(),
+        Subst(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+    ]
+
+    aligner = PairwiseAligner(scoring, m=len(y), n=len(x))
+    alignment = aligner.calculate_semiglobal(y, x)
+    assert alignment.x_start == 0
+    assert alignment.operations == [
+        Match(),
+        Subst(),
+        Subst(),
+        Match(),
+        Subst(),
+        Subst(),
+        Subst(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+    ]
+
+
+def test_left_aligned_del_pairwise_aligner():
+    x = b"GTGCATCATGTG"
+    y = b"GTGCATCATCATGTG"
+    scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-1)
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.calculate_global(x, y)
+    assert alignment.x_start == 0
+    assert alignment.y_start == 0
+    assert alignment.operations == [
+        Match(),
+        Match(),
+        Match(),
+        Del(),
+        Del(),
+        Del(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+    ]
+
+
+def test_global_right_del_pairwise_aligner():
+    x = b"AACCACGTACGTGGGGGGA"
+    y = b"CCACGTACGT"
+    scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-1)
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.calculate_global(x, y)
+    assert alignment.x_start == 0
+    assert alignment.y_start == 0
+    assert alignment.score == -9
+    assert alignment.operations == [
+        Ins(),
+        Ins(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Ins(),
+        Ins(),
+        Ins(),
+        Ins(),
+        Ins(),
+        Ins(),
+        Ins(),
+    ]
+
+
+def test_left_aligned_ins_pairwise_aligner():
+    x = b"GTGCATCATCATGTG"
+    y = b"GTGCATCATGTG"
+    scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-1)
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.calculate_global(x, y)
+    assert alignment.x_start == 0
+    assert alignment.y_start == 0
+    assert alignment.operations == [
+        Match(),
+        Match(),
+        Match(),
+        Ins(),
+        Ins(),
+        Ins(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+    ]
+
+
+def test_aligner_new_pairwise_aligner():  # test default capacity
+    x = b"ACCGTGGAT"
+    y = b"AAAAACCGTTGAT"
+    scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-1)
+    aligner = PairwiseAligner(scoring)
+
+    alignment = aligner.calculate_semiglobal(x, y)
+    assert alignment.x_start == 0
+    assert alignment.y_start == 4
+    operations = [
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Subst(),
+        Match(),
+        Match(),
+        Match(),
+    ]
+    assert alignment.operations == operations
+
+    alignment = aligner.calculate_local(x, y)
+    assert alignment.x_start == 0
+    assert alignment.y_start == 4
+    assert alignment.operations == operations
+
+    alignment = aligner.calculate_global(x, y)
+    assert alignment.x_start == 0
+    assert alignment.y_start == 0
+    assert alignment.operations == [
+        Del(),
+        Del(),
+        Del(),
+        Del(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Subst(),
         Match(),
         Match(),
         Match(),

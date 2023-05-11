@@ -6,3 +6,5 @@ lint:
 	cargo clippy
 	cargo fmt --all --check
 check: testing_build test lint
+fix:
+	cargo fmt --all
