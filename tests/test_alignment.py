@@ -7,6 +7,9 @@ from bioforma.alignment import (
     Ins,
     Xclip,
     Yclip,
+    Scoring,
+    PairwiseAligner,
+    DEFAULT_ALIGNER_CAPACITY,
 )
 from bioforma.alignment.distance import (
     hamming,
@@ -203,4 +206,85 @@ def test_alignment_path():
         (9, 8, Ins()),
         (9, 9, Del()),
         (9, 10, Del()),
+    ]
+
+
+def test_alignment_properties():
+    operations = [Match(), Match(), Match(), Subst(), Ins(), Ins(), Del(), Del()]
+    alignment = Alignment(
+        score=5,
+        x_start=3,
+        y_start=0,
+        x_end=9,
+        y_end=10,
+        x_len=10,
+        y_len=10,
+        operations=operations,
+        mode='semiglobal',
+    )
+    assert alignment.score == 5
+    assert alignment.x_start == 3
+    assert alignment.y_start == 0
+    assert alignment.x_end == 9
+    assert alignment.y_end == 10
+    assert alignment.x_len == 10
+    assert alignment.y_len == 10
+    assert alignment.operations == operations
+    assert alignment.mode == 'semiglobal'
+
+
+def test_constants():
+    assert DEFAULT_ALIGNER_CAPACITY == 200
+
+
+def test_scoring():
+    s1 = Scoring(-5, -1, 'blosum62')
+    s2 = Scoring.from_scores(-5, -1, 1, -1)
+    pa = PairwiseAligner(s1)
+    x = b"GGGGGGACGTACGTACGT"
+    y = b"AAAAACGTACGTACGTAAAA"
+    a = pa.custom(x, y)
+    print(a)
+
+
+def test_semiglobal_pairwise_aligner():
+    x = b"ACCGTGGAT"
+    y = b"AAAAACCGTTGAT"
+    scoring = Scoring.from_scores(-5, -1, match_score=1, mismatch_score=-1)
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.semiglobal(x, y)
+    assert alignment.y_start == 4
+    assert alignment.x_start == 0
+    assert alignment.operations == [
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Subst(),
+        Match(),
+        Match(),
+        Match(),
+    ]
+
+
+def test_semiglobal_gap_open_lt_mismatch_pairwise_aligner():
+    x = b"ACCGTGGAT"
+    y = b"AAAAACCGTTGAT"
+    scoring = Scoring.from_scores(-1, -1, match_score=1, mismatch_score=-5)
+    aligner = PairwiseAligner(scoring, m=len(x), n=len(y))
+    alignment = aligner.semiglobal(x, y)
+    assert alignment.y_start == 4
+    assert alignment.x_start == 0
+    assert alignment.operations == [
+        Match(),
+        Match(),
+        Match(),
+        Match(),
+        Del(),
+        Match(),
+        Ins(),
+        Match(),
+        Match(),
+        Match(),
     ]

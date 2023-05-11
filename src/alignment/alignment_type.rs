@@ -263,6 +263,62 @@ impl Alignment {
         }))
     }
 
+    #[getter]
+    pub fn score(&self) -> i32 {
+        self.0.score
+    }
+
+    #[getter]
+    pub fn x_start(&self) -> usize {
+        self.0.xstart
+    }
+
+    #[getter]
+    pub fn y_start(&self) -> usize {
+        self.0.ystart
+    }
+
+    #[getter]
+    pub fn x_end(&self) -> usize {
+        self.0.xend
+    }
+
+    #[getter]
+    pub fn y_end(&self) -> usize {
+        self.0.yend
+    }
+
+    #[getter]
+    pub fn x_len(&self) -> usize {
+        self.0.xlen
+    }
+
+    #[getter]
+    pub fn y_len(&self) -> usize {
+        self.0.ylen
+    }
+
+    #[getter]
+    pub fn operations(&self, py: Python) -> Vec<Option<PyObject>> {
+        self.0
+            .operations
+            .iter()
+            .map(|_alignment_operation| {
+                rust_bio_alignment_operation_into_py_object(*_alignment_operation, py)
+            })
+            .collect()
+    }
+
+    #[getter]
+    pub fn mode(&self) -> &str {
+        match self.0.mode {
+            _AlignmentMode::Local => "local",
+            _AlignmentMode::Semiglobal => "semiglobal",
+            _AlignmentMode::Global => "global",
+            _AlignmentMode::Custom => "custom",
+        }
+    }
+
     pub fn cigar(&self, hard_clip: bool) -> String {
         self.0.cigar(hard_clip)
     }

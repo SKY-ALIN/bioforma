@@ -129,26 +129,8 @@ pub struct PairwiseAligner {
     scoring: Scoring,
 }
 
-pub const DEFAULT_ALIGNER_CAPACITY: usize = 200;
-
-#[pymethods]
 impl PairwiseAligner {
-    #[new]
-    #[pyo3(signature = (scoring, m=DEFAULT_ALIGNER_CAPACITY, n=DEFAULT_ALIGNER_CAPACITY))]
-    pub fn new(scoring: Scoring, m: usize, n: usize) -> Self {
-        PairwiseAligner {
-            I: [Vec::with_capacity(m + 1), Vec::with_capacity(m + 1)],
-            D: [Vec::with_capacity(m + 1), Vec::with_capacity(m + 1)],
-            S: [Vec::with_capacity(m + 1), Vec::with_capacity(m + 1)],
-            Lx: Vec::with_capacity(n + 1),
-            Ly: Vec::with_capacity(m + 1),
-            Sn: Vec::with_capacity(m + 1),
-            traceback: Traceback::with_capacity(m, n),
-            scoring,
-        }
-    }
-
-    pub fn custom(&mut self, x: &[u8], y: &[u8]) -> PyResult<Alignment> {
+    fn calculate_unwrapped_custom_alignment(&mut self, x: &[u8], y: &[u8]) -> PyResult<_Alignment> {
         let (m, n) = (x.len(), y.len());
         self.traceback.init(m, n);
 
@@ -470,7 +452,7 @@ impl PairwiseAligner {
         }
 
         operations.reverse();
-        Ok(Alignment(_Alignment {
+        Ok(_Alignment {
             score: self.S[n % 2][m],
             ystart,
             xstart,
@@ -480,7 +462,122 @@ impl PairwiseAligner {
             xlen: m,
             operations,
             mode: _AlignmentMode::Custom,
-        }))
+        })
+    }
+}
+
+pub const DEFAULT_ALIGNER_CAPACITY: usize = 200;
+
+#[pymethods]
+impl PairwiseAligner {
+    #[new]
+    #[pyo3(signature = (scoring, m=DEFAULT_ALIGNER_CAPACITY, n=DEFAULT_ALIGNER_CAPACITY))]
+    pub fn new(scoring: Scoring, m: usize, n: usize) -> Self {
+        PairwiseAligner {
+            I: [Vec::with_capacity(m + 1), Vec::with_capacity(m + 1)],
+            D: [Vec::with_capacity(m + 1), Vec::with_capacity(m + 1)],
+            S: [Vec::with_capacity(m + 1), Vec::with_capacity(m + 1)],
+            Lx: Vec::with_capacity(n + 1),
+            Ly: Vec::with_capacity(m + 1),
+            Sn: Vec::with_capacity(m + 1),
+            traceback: Traceback::with_capacity(m, n),
+            scoring,
+        }
+    }
+
+    pub fn custom(&mut self, x: &[u8], y: &[u8]) -> PyResult<Alignment> {
+        let unwrapped_alignment = self.calculate_unwrapped_custom_alignment(x, y)?;
+        Ok(Alignment(unwrapped_alignment))
+    }
+
+    pub fn global(&mut self, x: &[u8], y: &[u8]) -> PyResult<Alignment> {
+        // Store the current clip penalties
+        let clip_penalties = [
+            self.scoring.xclip_prefix,
+            self.scoring.xclip_suffix,
+            self.scoring.yclip_prefix,
+            self.scoring.yclip_suffix,
+        ];
+
+        // Temporarily Over-write the clip penalties
+        self.scoring.xclip_prefix = MIN_SCORE;
+        self.scoring.xclip_suffix = MIN_SCORE;
+        self.scoring.yclip_prefix = MIN_SCORE;
+        self.scoring.yclip_suffix = MIN_SCORE;
+
+        // Compute the alignment
+        let mut alignment = self.calculate_unwrapped_custom_alignment(x, y)?;
+        alignment.mode = _AlignmentMode::Global;
+
+        // Set the clip penalties to the original values
+        self.scoring.xclip_prefix = clip_penalties[0];
+        self.scoring.xclip_suffix = clip_penalties[1];
+        self.scoring.yclip_prefix = clip_penalties[2];
+        self.scoring.yclip_suffix = clip_penalties[3];
+
+        Ok(Alignment(alignment))
+    }
+
+    pub fn semiglobal(&mut self, x: &[u8], y: &[u8]) -> PyResult<Alignment> {
+        // Store the current clip penalties
+        let clip_penalties = [
+            self.scoring.xclip_prefix,
+            self.scoring.xclip_suffix,
+            self.scoring.yclip_prefix,
+            self.scoring.yclip_suffix,
+        ];
+
+        // Temporarily Over-write the clip penalties
+        self.scoring.xclip_prefix = MIN_SCORE;
+        self.scoring.xclip_suffix = MIN_SCORE;
+        self.scoring.yclip_prefix = 0;
+        self.scoring.yclip_suffix = 0;
+
+        // Compute the alignment
+        let mut alignment = self.calculate_unwrapped_custom_alignment(x, y)?;
+        alignment.mode = _AlignmentMode::Semiglobal;
+
+        // Filter out Xclip and Yclip from alignment.operations
+        alignment.filter_clip_operations();
+
+        // Set the clip penalties to the original values
+        self.scoring.xclip_prefix = clip_penalties[0];
+        self.scoring.xclip_suffix = clip_penalties[1];
+        self.scoring.yclip_prefix = clip_penalties[2];
+        self.scoring.yclip_suffix = clip_penalties[3];
+
+        Ok(Alignment(alignment))
+    }
+
+    pub fn local(&mut self, x: &[u8], y: &[u8]) -> PyResult<Alignment> {
+        // Store the current clip penalties
+        let clip_penalties = [
+            self.scoring.xclip_prefix,
+            self.scoring.xclip_suffix,
+            self.scoring.yclip_prefix,
+            self.scoring.yclip_suffix,
+        ];
+
+        // Temporarily Over-write the clip penalties
+        self.scoring.xclip_prefix = 0;
+        self.scoring.xclip_suffix = 0;
+        self.scoring.yclip_prefix = 0;
+        self.scoring.yclip_suffix = 0;
+
+        // Compute the alignment
+        let mut alignment = self.calculate_unwrapped_custom_alignment(x, y)?;
+        alignment.mode = _AlignmentMode::Local;
+
+        // Filter out Xclip and Yclip from alignment.operations
+        alignment.filter_clip_operations();
+
+        // Set the clip penalties to the original values
+        self.scoring.xclip_prefix = clip_penalties[0];
+        self.scoring.xclip_suffix = clip_penalties[1];
+        self.scoring.yclip_prefix = clip_penalties[2];
+        self.scoring.yclip_suffix = clip_penalties[3];
+
+        Ok(Alignment(alignment))
     }
 }
 
