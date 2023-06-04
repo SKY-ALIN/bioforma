@@ -1,10 +1,4 @@
 #[rustfmt::skip]
-use bio::alignment::distance::{
-    hamming             as _hamming,
-    levenshtein         as _levenshtein,
-    simd                as _simd,
-};
-#[rustfmt::skip]
 use bio_types::alignment::{
     Alignment           as _Alignment,
     AlignmentMode       as _AlignmentMode,
@@ -13,13 +7,11 @@ use bio_types::alignment::{
 use pyo3::basic::CompareOp;
 use pyo3::exceptions::{PyNotImplementedError, PyValueError};
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
-use pyo3::wrap_pymodule;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
 #[pyclass(subclass)]
-struct AlignmentOperation(_AlignmentOperation);
+pub struct AlignmentOperation(_AlignmentOperation);
 
 impl AlignmentOperation {
     fn get_operation(&self) -> _AlignmentOperation {
@@ -28,22 +20,22 @@ impl AlignmentOperation {
 }
 
 #[pyclass(extends=AlignmentOperation)]
-struct Match(_AlignmentOperation);
+pub struct Match(_AlignmentOperation);
 
 #[pyclass(extends=AlignmentOperation)]
-struct Subst(_AlignmentOperation);
+pub struct Subst(_AlignmentOperation);
 
 #[pyclass(extends=AlignmentOperation)]
-struct Del(_AlignmentOperation);
+pub struct Del(_AlignmentOperation);
 
 #[pyclass(extends=AlignmentOperation)]
-struct Ins(_AlignmentOperation);
+pub struct Ins(_AlignmentOperation);
 
 #[pyclass(extends=AlignmentOperation)]
-struct Xclip(_AlignmentOperation);
+pub struct Xclip(_AlignmentOperation);
 
 #[pyclass(extends=AlignmentOperation)]
-struct Yclip(_AlignmentOperation);
+pub struct Yclip(_AlignmentOperation);
 
 fn hash(slf: _AlignmentOperation) -> u64 {
     let mut hasher = DefaultHasher::new();
@@ -224,7 +216,7 @@ fn rust_bio_alignment_operation_into_py_object(
 }
 
 #[pyclass]
-struct Alignment(_Alignment);
+pub struct Alignment(pub _Alignment);
 
 #[pymethods]
 impl Alignment {
@@ -271,8 +263,77 @@ impl Alignment {
         }))
     }
 
-    pub fn cigar(&self, hard_clip: bool) -> String {
-        self.0.cigar(hard_clip)
+    #[getter]
+    pub fn score(&self) -> i32 {
+        self.0.score
+    }
+
+    #[getter]
+    pub fn x_start(&self) -> usize {
+        self.0.xstart
+    }
+
+    #[getter]
+    pub fn y_start(&self) -> usize {
+        self.0.ystart
+    }
+
+    #[getter]
+    pub fn x_end(&self) -> usize {
+        self.0.xend
+    }
+
+    #[getter]
+    pub fn y_end(&self) -> usize {
+        self.0.yend
+    }
+
+    #[getter]
+    pub fn x_len(&self) -> usize {
+        self.0.xlen
+    }
+
+    #[getter]
+    pub fn y_len(&self) -> usize {
+        self.0.ylen
+    }
+
+    #[getter]
+    pub fn operations(&self, py: Python) -> Vec<Option<PyObject>> {
+        self.0
+            .operations
+            .iter()
+            .map(|_alignment_operation| {
+                rust_bio_alignment_operation_into_py_object(*_alignment_operation, py)
+            })
+            .collect()
+    }
+
+    #[getter]
+    pub fn mode(&self) -> &str {
+        match self.0.mode {
+            _AlignmentMode::Local => "local",
+            _AlignmentMode::Semiglobal => "semiglobal",
+            _AlignmentMode::Global => "global",
+            _AlignmentMode::Custom => "custom",
+        }
+    }
+
+    pub fn cigar(&self, hard_clip: bool) -> PyResult<String> {
+        match self.0.mode {
+            _AlignmentMode::Global => {
+                return Err(PyValueError::new_err(
+                    "Cigar is not supported for Global Alignment mode",
+                ))
+            }
+            _AlignmentMode::Local => {
+                return Err(PyValueError::new_err(
+                    "Cigar is not supported for Local Alignment mode",
+                ))
+            }
+            _ => {}
+        }
+        Ok(self.0.cigar(hard_clip))
     }
 
     pub fn pretty(&self, x: &[u8], y: &[u8]) -> String {
@@ -297,70 +358,4 @@ impl Alignment {
             self.0.score, self.0.xstart, self.0.ystart, self.0.xend, self.0.yend, self.0.xlen, self.0.ylen, self.0.operations, self.0.mode
         )
     }
-}
-
-#[pyfunction]
-fn hamming(alpha: &[u8], beta: &[u8]) -> PyResult<u64> {
-    if alpha.len() != beta.len() {
-        Err(PyValueError::new_err(
-            "hamming distance cannot be calculated for texts of different length",
-        ))
-    } else {
-        Ok(_hamming(alpha, beta))
-    }
-}
-
-#[pyfunction]
-fn simd_hamming(alpha: &[u8], beta: &[u8]) -> PyResult<u64> {
-    if alpha.len() != beta.len() {
-        Err(PyValueError::new_err(
-            "hamming distance cannot be calculated for texts of different length",
-        ))
-    } else {
-        Ok(_simd::hamming(alpha, beta))
-    }
-}
-
-#[pyfunction]
-fn levenshtein(alpha: &[u8], beta: &[u8]) -> u32 {
-    _levenshtein(alpha, beta)
-}
-
-#[pyfunction]
-fn simd_levenshtein(alpha: &[u8], beta: &[u8]) -> u32 {
-    _simd::levenshtein(alpha, beta)
-}
-
-#[pyfunction]
-fn simd_bounded_levenshtein(alpha: &[u8], beta: &[u8], k: u32) -> Option<u32> {
-    _simd::bounded_levenshtein(alpha, beta, k)
-}
-
-#[pymodule]
-fn distance(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(hamming, m)?)?;
-    m.add_function(wrap_pyfunction!(simd_hamming, m)?)?;
-    m.add_function(wrap_pyfunction!(levenshtein, m)?)?;
-    m.add_function(wrap_pyfunction!(simd_levenshtein, m)?)?;
-    m.add_function(wrap_pyfunction!(simd_bounded_levenshtein, m)?)?;
-    Ok(())
-}
-
-#[pymodule]
-pub fn alignment(py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<AlignmentOperation>()?;
-    m.add_class::<Match>()?;
-    m.add_class::<Subst>()?;
-    m.add_class::<Del>()?;
-    m.add_class::<Ins>()?;
-    m.add_class::<Xclip>()?;
-    m.add_class::<Yclip>()?;
-    m.add_class::<Alignment>()?;
-
-    m.add_wrapped(wrap_pymodule!(distance))?;
-    let sys = PyModule::import(py, "sys")?;
-    let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
-    sys_modules.set_item("bioforma.alignment.distance", m.getattr("distance")?)?;
-
-    Ok(())
 }

@@ -223,5 +223,5 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            dist/
-          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
+            dist/*
+#          prerelease: ${{ contains(github.ref, 'a') || contains(github.ref, 'b') }}

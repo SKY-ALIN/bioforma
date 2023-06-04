@@ -4,7 +4,6 @@ use pyo3::wrap_pymodule;
 
 mod alignment;
 mod alphabets;
-mod scores;
 mod seq_analysis;
 
 pub fn get_version() -> String {
@@ -23,14 +22,13 @@ pub fn get_authors() -> Vec<String> {
 }
 
 #[pymodule]
-fn _bioforma(py: Python, m: &PyModule) -> PyResult<()> {
+fn bioforma(py: Python, m: &PyModule) -> PyResult<()> {
     m.add("__version__", get_version())?;
     m.add("__authors__", get_authors())?;
     m.add("build_profile", env!("PROFILE"))?;
 
     m.add_wrapped(wrap_pymodule!(alignment::alignment))?;
     m.add_wrapped(wrap_pymodule!(alphabets::alphabets))?;
-    m.add_wrapped(wrap_pymodule!(scores::scores))?;
     m.add_wrapped(wrap_pymodule!(seq_analysis::seq_analysis))?;
 
     let sys = PyModule::import(py, "sys")?;
@@ -38,7 +36,6 @@ fn _bioforma(py: Python, m: &PyModule) -> PyResult<()> {
 
     sys_modules.set_item("bioforma.alignment", m.getattr("alignment")?)?;
     sys_modules.set_item("bioforma.alphabets", m.getattr("alphabets")?)?;
-    sys_modules.set_item("bioforma.scores", m.getattr("scores")?)?;
     sys_modules.set_item("bioforma.seq_analysis", m.getattr("seq_analysis")?)?;
 
     Ok(())
