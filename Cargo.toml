@@ -20,10 +20,10 @@ include = [
 ]
 
 [package.metadata.maturin]
-name = "bioforma._bioforma"
+name = "bioforma.bioforma"
 
 [lib]
-name = "_bioforma"
+name = "bioforma"
 crate-type = ["cdylib"]
 
 [dependencies]

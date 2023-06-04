@@ -22,7 +22,7 @@ pub fn get_authors() -> Vec<String> {
 }
 
 #[pymodule]
-fn _bioforma(py: Python, m: &PyModule) -> PyResult<()> {
+fn bioforma(py: Python, m: &PyModule) -> PyResult<()> {
     m.add("__version__", get_version())?;
     m.add("__authors__", get_authors())?;
     m.add("build_profile", env!("PROFILE"))?;
