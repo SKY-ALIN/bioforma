@@ -161,7 +161,7 @@ def test_alignment_pretty():
         operations=[Subst(), Match(), Match()],
         mode='semiglobal',
     )
-    assert alignment.pretty(b"GAT", b"CTAATCC") == (
+    assert alignment.pretty(b"GAT", b"CTAATCC", 100) == (
         "  GAT  \n"
         "  \\||  \n"
         "CTAATCC\n"
@@ -179,7 +179,7 @@ def test_alignment_pretty():
         operations=[Yclip(5), Match(), Subst(), Subst(), Ins(), Del(), Del(), Xclip(1)],
         mode='custom',
     )
-    assert alignment.pretty(b"AAAAA", b"TTTTTTTTTT") == (
+    assert alignment.pretty(b"AAAAA", b"TTTTTTTTTT", 100) == (
         "     AAAA--A\n"
         "     |\\\\+xx \n"
         "TTTTTTTT-TT \n"

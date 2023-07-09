@@ -17,7 +17,7 @@ Progress tree (15/92):
 
 - [ ] alignment
   - [x] **distance.rs**
-  - [ ] pairwise
+  - [x] pairwise
     - [ ] banded.rs
   - [ ] poa.rs
   - [ ] sparse.rs
