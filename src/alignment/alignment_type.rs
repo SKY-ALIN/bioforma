@@ -336,8 +336,8 @@ impl Alignment {
         Ok(self.0.cigar(hard_clip))
     }
 
-    pub fn pretty(&self, x: &[u8], y: &[u8]) -> String {
-        self.0.pretty(x, y)
+    pub fn pretty(&self, x: &[u8], y: &[u8], ncol: usize) -> String {
+        self.0.pretty(x, y, ncol)
     }
 
     pub fn path(&self, py: Python) -> Vec<(usize, usize, Option<PyObject>)> {
