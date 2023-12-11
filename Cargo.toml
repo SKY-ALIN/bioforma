@@ -28,7 +28,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = "0.20.0"
-bio = "1.4.0"
+bio = "1.5.0"
 bio-types = "1.0.1"
 
 [features]
