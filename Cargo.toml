@@ -27,7 +27,7 @@ name = "bioforma"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = "0.21.1"
+pyo3 = "0.21.2"
 bio = "1.6.0"
 bio-types = "1.0.1"
 
